@@ -1,0 +1,19 @@
+- name: damask_parse_env
+  setup: |
+    micromamba shell init
+    micromamba activate matflow_damask_parse_env
+  executables:
+    - label: python
+      instances:
+        - command: python
+          num_cores: 1
+          parallel_mode: null
+
+- name: damask_env
+  setup: null
+  executables:
+    - label: damask_grid
+      instances:
+        - command: DAMASK_grid
+          num_cores: 1
+          parallel_mode: null
