@@ -17,6 +17,22 @@ docker run -it ghcr.io/hpcflow/matflow-damask-parse:latest bash
 ```
 This should place you in `/tmp` inside the container, where you can now run `matflow --help`, or import `damask` or `damask_parse` in python.
 
+### File transfer between the container and host
+
+If you need to access files from your host machine in the container, or get resulting files from the container on your host machine, you can use a volume mount by adding the flag `-v $PWD/wd:/tmp` to the command.
+
+This will map the `./wd` directory in your host machine to `/tmp` in the container, which is where the command runs. Any outputs generated in this directory will also be available in the host machine (`./wd`).
+
+For example,
+
+```
+docker run -v $PWD/wd:/tmp ghcr.io/hpcflow/matflow-damask-parse:latest python -c "from pathlib import Path; Path('greetings.txt').write_text('Hello from the matflow-damask-parse container.');"
+```
+
+should create a `greetings.txt` file in your host machine.
+
+**WARNING**: any files that you modify in the container directory `/tmp` will also be modified in the host system's `./wd`.
+
 
 ## Build
 
