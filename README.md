@@ -6,14 +6,14 @@ This repository hosts the dockerfile to create a container image based on microm
 
 The environment is activated automatically, so you can directly run the container with
 ```
-docker run ghcr.io/hpcflow/matflow-damask-parse:latest matflow --help
+docker run --rm ghcr.io/hpcflow/matflow-damask-parse:latest matflow --help
 ```
 
 ### Interactive
 
 If you want to run an interactive container use
 ```
-docker run -it ghcr.io/hpcflow/matflow-damask-parse:latest bash
+docker run --rm -it ghcr.io/hpcflow/matflow-damask-parse:latest bash
 ```
 This should place you in `/tmp` inside the container, where you can now run `matflow --help`, or import `damask` or `damask_parse` in python.
 
@@ -26,7 +26,7 @@ This will map the `./wd` directory in your host machine to `/tmp` in the contain
 For example,
 
 ```
-docker run -v $PWD/wd:/tmp ghcr.io/hpcflow/matflow-damask-parse:latest python -c "from pathlib import Path; Path('greetings.txt').write_text('Hello from the matflow-damask-parse container.');"
+docker run --rm -v $PWD/wd:/tmp ghcr.io/hpcflow/matflow-damask-parse:latest python -c "from pathlib import Path; Path('greetings.txt').write_text('Hello from the matflow-damask-parse container.');"
 ```
 
 should create a `greetings.txt` file in your host machine.
