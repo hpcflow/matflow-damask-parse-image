@@ -1,0 +1,74 @@
+name: build-test-push
+run-name: 'build-test-push: versioned? ${{ github.event.inputs.versioned }} - latest? ${{ github.event.inputs.latest }}'
+
+on:
+  workflow_dispatch:
+    inputs:
+      versioned:
+        description: 'Push with versioned tag?'
+        required: true
+        type: boolean
+        default: true
+      latest:
+        description: 'Push with "latest" tag?'
+        required: true
+        type: boolean
+        default: true
+
+jobs:
+  build-test-push:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          load: true
+          tags: matflow-damask-parse:testing
+        
+      - name: Test
+        run: |
+          expected=""
+          actual=$(docker run matflow-damask-parse:testing python -c "import matflow,damask_parse,damask")
+          if [ "$expected" = "$actual" ]; then
+            echo "Passed -   $actual"
+          else
+            echo "ERROR - Expected: $expected"
+            echo "          Actual: $actual"
+            status=1
+          fi
+
+          exit $status
+        
+      - name: Create tag from damask and matflow versions
+        id: tag
+        run: |
+          damask=$(sed 's|-alpha|a|' <<<"$(docker run matflow-damask-parse:testing python -c 'import damask; print(damask.__version__)')")
+          matflow=$(echo $(docker run matflow-damask-parse:testing matflow --version) | cut -d' ' -f 3)
+          echo "versions=d${damask}_m${matflow}" >> $GITHUB_OUTPUT
+  
+      - name: Log in to the Container registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push versioned
+        if: github.event.inputs.versioned == 'true'
+        run: |
+          docker image tag matflow-damask-parse:testing ghcr.io/hpcflow/matflow-damask-parse:${{ steps.tag.outputs.versions }}
+          docker push ghcr.io/hpcflow/matflow-damask-parse:${{ steps.tag.outputs.versions }}
+
+      - name: Push latest
+        if: github.event.inputs.latest == 'true'
+        run: |
+          docker image tag matflow-damask-parse:testing ghcr.io/hpcflow/matflow-damask-parse:latest
+          docker push ghcr.io/hpcflow/matflow-damask-parse:latest
