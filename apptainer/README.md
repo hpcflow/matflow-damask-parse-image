@@ -37,7 +37,7 @@ This will map the `./wd` directory in your host machine to `/wd` in the containe
 For example,
 
 ```
-apptainer run -ce -B $PWD/wd:/wd/ matflow-damask-parse_test.sif "matflow --version > hello.txt"
+apptainer run -ce -B $PWD/wd:/wd/ matflow-damask-parse_latest.sif "matflow --version > hello.txt"
 ```
 
 should create a `hello.txt` file in your host machine.
