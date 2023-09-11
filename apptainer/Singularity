@@ -1,14 +1,8 @@
-#Build this image with:
-#   apptainer build matflow-damask-parse_latest.sif Singularity
-# You can run the resulting container with, e.g.:
-#   apptainer run matflow-damask-parse_latest.sif matflow --version
-#   apptainer run matflow-damask-parse_latest.sif "matflow --version && python -m 'import matflow as mf'"
-
 Bootstrap: docker
 From: ghcr.io/hpcflow/matflow-damask-parse:latest
 
 %post
-    mkdir /wd
+    mkdir -p /wd
     cat << EntrypointScript > /entrypoint.sh
 #!/bin/bash
 eval "\$(micromamba shell hook --shell bash)"
@@ -20,15 +14,5 @@ EntrypointScript
     cd /wd
     exec /bin/bash <<'!EOF!' -s -- "$@"
     source /entrypoint.sh
-    matflow --version
-
-    # To **print** the args given after image name
-    echo "
-    -------------------------------------------
-    Evaluating in the container: \$ $*
-    "
-    # To **execute** the args given after image name
-    # Most references use exec instead of eval, but eval allows multiple instructions in " "
-    # exec "$@"
     eval "$@"
 !EOF!

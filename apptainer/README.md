@@ -1,82 +1,65 @@
 # Using apptainer (singularity) to run the matflow-damask-parse container
 
-The docker container can be imported by apptainer and used mostly without problems
-
+The docker container can be imported by apptainer and used mostly without problems.
 However, the micromamba environment is not automatically loaded when a container is spun up, so a few tweaks are needed.
 
-The simplest way is to copy and execute the `setup_apptainer.sh` script to the host machine.
+The Singularity file in this folder corrects this problem, and lets you use the container in the same way.
 
-## Using the setup script
-The setup script assumes there is a working installation of apptainer (singularity) on the host machine.
+## Build the SIF image
 
-You can directly run the setup script with:
+First, update line 2 (which reads `FROM: ...`) of the Singularity file to make sure that the image source is pointing to the right place.
+
+Then, to build the image, run
 ```
-./setup_apptainer.sh
+apptainer build matflow-damask-parse_latest.sif Singularity
+```
+The name of the sif file can be whatever you want, but make sure you reference the "Singularity" file at the end.
+
+This should generate a matflow-damask-parse_latest.sif file, which is the apptainer/singularity version of your docker container.
+
+## Using the SIF image
+
+The sif file generated should activate the micromamba environment automatically for commands passed to it in the container call.
+You can run it directly with, e.g.:
+```
+apptainer run -ce matflow-damask-parse_latest.sif matflow --version
+```
+The `-ce` flag is short for `--contain --cleanenv`, and although it is not absolutely necessary, it helps to sandbox your container.
+If you need to pass multiple instrictions, wrap your commands with commas, e.g.:
+apptainer run -ce matflow-damask-parse_latest.sif "matflow --version && matflow --hpcflow-version"
+
+### File transfer between the container and host
+
+In a similar way to the docker container, you can share files with the container by means of a mount. In apptainer/singularity, this is achieved with the flag `-B $PWD/wd:/wd/` to the command (`-B` is short for `--bind`).
+
+This will map the `./wd` directory in your host machine to `/wd` in the container, which is where the command runs. Any outputs generated in this directory will also be available in the host machine (`./wd`).
+
+For example,
+
+```
+apptainer run -ce -B $PWD/wd:/wd/ matflow-damask-parse_test.sif "matflow --version > hello.txt"
 ```
 
-By default, this will create a `matflow-damask-parse` folder with a working directory (`wd`) subfolder.
-This folder will be mounted in the container when it runs.
-It will also configure the `run.sh` and `entrypoint.sh` scripts, and import the `matflow-damask-parse:latest` image to singularity.
-Finally, it will test the setup is correct by running the container once, and output the version of matflow to a text file.
+should create a `hello.txt` file in your host machine.
 
-If everything runs smoothly, you should en up with a file structure like this:
-```
-├── matflow-damask-parse
-│   ├── matflow-damask-parse_latest.sif
-│   ├── run.sh
-│   └── wd
-│       ├── entrypoint.sh
-│       └── matflow_version.txt
-│
-└── setup_apptainer.sh
-```
-
-At this point, feel free to delete `setup_apptainer.sh`, and `matflow_version.txt`.
-
-### Running a script inside the container
-
-When you execute the script `run.sh` it calls the container with `wd` mounted and executes `entrypoint.sh` inside the container.
-
-Therefore, it is the script `entrypoint.sh` where you should add instructions on what to do inside the container.
-
-For example, you can replace line 8 of the script with:
-```
-python -c "from pathlib import Path; Path('greetings.txt').write_text('Hello from the matflow-damask-parse container.');"
-```
-Save your changes to `entrypoint.sh`, and use the run script:
-```
-./run.sh
-```
-You should see the greetings file appear in the wd directory.
-
-
-### Configuring the setup script
-
-You can configure:
-
-- Where the `matflow-damask-parse` directory is created, by modifying the `home_dir` variable.
-- The name of the folder that will be mounted in the container, by modifying the `work_dir` variable.
-- The version of the `matflow-damask-parse` image, by modifying the `mdp_ver` variable.
-
-If you have a custom image that you want to test, you may even configure the repository where the image is held (`d_repo` variable), 
-or the name of the docker image (`image_n` variable), but make sure you know what you are doing...
-
+**WARNING**: any files that you modify in the container directory `/wd` will also be modified in the host system's `./wd`.
 
 ## Interactive use of container
 
 You can also create an interactive session with the container and work inside it.
 
-First, make sure you have imported the container to apptainer (singularity):
+Create the interactive session with:
 ```
-apptainer pull docker://ghcr.io/hpcflow/matflow-damask-parse:latest
-```
-
-Then create the interactive session with:
-```
-apptainer shell --contain --cleanenv --bind $PWD/wd/:/tmp/ --pwd /tmp matflow-damask-parse_latest.sif
+apptainer shell -ce -B $PWD/wd/:/wd/ --pwd /wd matflow-damask-parse_latest.sif
 ```
 
-Once inside the container, make sure to activate the micromamba environment with:
+Note the addition of the `--pwd /wd` flag, which places you in the right working directory inside the container.
+
+Once inside the container, make sure to activate the micromamba environment with either:
+```
+source /entrypoint.sh
+```
+or
 ```
 eval "$(micromamba shell hook --shell bash)"
 micromamba activate matflow_damask_parse_env
