@@ -16,3 +16,5 @@ RUN <<activate_micromamba
     matflow config append environment_sources envs.yaml
 activate_micromamba
 ENV ENV_NAME=matflow_damask_parse_env
+
+WORKDIR /wd
