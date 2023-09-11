@@ -3,16 +3,10 @@ From: ghcr.io/hpcflow/matflow-damask-parse:latest
 
 %post
     mkdir -p /wd
-    cat << EntrypointScript > /entrypoint.sh
-#!/bin/bash
-eval "\$(micromamba shell hook --shell bash)"
-micromamba activate matflow_damask_parse_env
-EntrypointScript
-    chmod +x /entrypoint.sh
+    MY_ENV=matflow_damask_parse_env
+    echo "PATH=/opt/conda/envs/$MY_ENV/bin:/opt/conda/condabin:$PATH" >> $SINGULARITY_ENVIRONMENT
+    echo "PS1='($MY_ENV) \W$ '" >> $SINGULARITY_ENVIRONMENT
 
 %runscript
     cd /wd
-    exec /bin/bash <<'!EOF!' -s -- "$@"
-    source /entrypoint.sh
     eval "$@"
-!EOF!

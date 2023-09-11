@@ -44,7 +44,7 @@ should create a `hello.txt` file in your host machine.
 
 **WARNING**: any files that you modify in the container directory `/wd` will also be modified in the host system's `./wd`.
 
-## Interactive use of container
+### Interactive use of the container
 
 You can also create an interactive session with the container and work inside it.
 
@@ -54,15 +54,5 @@ apptainer shell -ce -B $PWD/wd/:/wd/ --pwd /wd matflow-damask-parse_latest.sif
 ```
 
 Note the addition of the `--pwd /wd` flag, which places you in the right working directory inside the container.
-
-Once inside the container, make sure to activate the micromamba environment with either:
-```
-source /entrypoint.sh
-```
-or
-```
-eval "$(micromamba shell hook --shell bash)"
-micromamba activate matflow_damask_parse_env
-```
 
 You are now set to start using the container interactively.
