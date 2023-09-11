@@ -1,0 +1,18 @@
+Bootstrap: docker
+From: ghcr.io/hpcflow/matflow-damask-parse:latest
+
+%post
+    mkdir -p /wd
+    cat << EntrypointScript > /entrypoint.sh
+#!/bin/bash
+eval "\$(micromamba shell hook --shell bash)"
+micromamba activate matflow_damask_parse_env
+EntrypointScript
+    chmod +x /entrypoint.sh
+
+%runscript
+    cd /wd
+    exec /bin/bash <<'!EOF!' -s -- "$@"
+    source /entrypoint.sh
+    eval "$@"
+!EOF!
