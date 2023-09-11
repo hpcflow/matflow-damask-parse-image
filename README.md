@@ -56,3 +56,6 @@ docker build -t ghcr.io/hpcflow/matflow-damask-parse:d3.0.0a7_m0.3.0a31 .
 docker push ghcr.io/hpcflow/matflow-damask-parse:d3.0.0a7_m0.3.0a31
 ```
 
+## Usage with Apptainer/Singularity
+
+See the apptainer folder and readme [here](https://github.com/hpcflow/matflow-damask-parse-image/tree/main/apptainer).
