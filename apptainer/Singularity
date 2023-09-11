@@ -1,0 +1,126 @@
+#Build this image with:
+#   apptainer build matflow-damask-parse_test.sif Singularity
+
+# Bootstrap: docker
+# From: ghcr.io/hpcflow/matflow-damask-parse:latest
+# Bootstrap: docker-daemon
+# From: matflow-damask-parse:test
+Bootstrap: localimage
+From: matflow-damask-parse_latest.sif
+
+%files
+    #
+
+%setup
+    #
+
+%post
+    mkdir /wd
+
+cat << EntrypointScript > /entrypoint.sh
+#!/bin/bash
+
+eval "\$(micromamba shell hook --shell bash)"
+micromamba activate matflow_damask_parse_env
+EntrypointScript
+    chmod +x /entrypoint.sh
+
+    # This adds micromamba initialization to the mambauser .bashrc
+    # USER=mambauser
+    # HOME=/home/mambauser
+    # micromamba shell init --shell bash --root-prefix=~/micromamba -q
+    # # Deletes check for interactive shell
+    # mv /home/mambauser/.bashrc /home/mambauser/.bashrc_backup
+    # sed '5,9d' /home/mambauser/.bashrc_backup > /home/mambauser/.bashrc
+
+
+%environment
+    #
+
+%runscript
+    # cp /home/mambauser/.bashrc ~/.bashrc
+    cd /wd
+
+exec /bin/bash <<'!EOF!' -s -- "$@"
+    source /entrypoint.sh
+
+    # eval \"\$(micromamba shell hook --shell bash)\"
+    # micromamba activate matflow_damask_parse_env
+    matflow --version
+
+    # To **print** the args given after image name
+    echo "
+    -------------------------------------------
+    -------------------------------------------
+    Evaluating in the container: \$ $*
+    "
+    # To **execute** the args given after image name
+    eval "$@"
+    # Most references use exec instead of eval, but eval allows multiple instructions in " "
+    # exec "$@"
+
+
+    # . /home/mambauser/.bashrc # Works, but does not persist - matflow: not found
+    # exec ". /home/mambauser/.bashrc" # ERROR in runscript: exec: . /home/mambauser/.bashrc: not found
+    # eval ". /home/mambauser/.bashrc" # Works, but does not persist - matflow: not found
+
+    # echo "
+    # -------------------------------------------
+    # Running script:"
+    # /entrypoint.sh  # Works, but runs in its own process, so it does not persist
+    # matflow --version # ERROR in runscript: matflow: not found
+
+    # echo "
+    # -------------------------------------------
+    # Now trying to initialize all bash sessions '.':"
+    # micromamba shell init --shell bash --root-prefix=~/micromamba   # Initializes for host user, not mambauser
+    # matflow --version # ERROR in runscript: matflow: not found
+
+    # echo "
+    # -------------------------------------------
+    # Now trying to source the script with '.':"
+    # . /entrypoint.sh
+    # matflow --version
+    # ERROR in runscript: eval: Syntax error: "(" unexpected (expecting "}")
+
+
+    # echo "
+    # -------------------------------------------
+    # Now trying to source the script:"
+    # source /entrypoint.sh
+    # ERROR in runscript: source: not found
+
+    # echo "
+    # -------------------------------------------
+    # Now trying wrapped in exec:"
+    # exec "eval \"\$(micromamba shell hook --shell bash)\""
+    # exec "micromamba activate matflow_damask_parse_env"
+    # matflow --version
+    #ERROR in runscript: exec: eval "$(micromamba shell hook --shell bash)": not found
+
+    # echo "
+    # -------------------------------------------
+    # Now trying wrapped in eval:"
+    # eval "eval \"\$(micromamba shell hook --shell bash)\""
+    # eval "micromamba activate matflow_damask_parse_env"
+    # matflow --version
+    #ERROR in runscript: eval: Syntax error: "(" unexpected (expecting "}")
+
+
+    # echo "
+    # -------------------------------------------
+    # Now trying plain commands:"
+    # eval "$(micromamba shell hook --shell bash)"
+    # micromamba activate matflow_damask_parse_env
+    # matflow --version
+    #ERROR in runscript: eval: Syntax error: "(" unexpected (expecting "}")
+
+
+
+
+# You can run the container with, e.g.:
+#   apptainer run matflow-damask-parse_test.sif matflow --version
+#   apptainer run matflow-damask-parse_test.sif "matflow --version && python -c 'import matflow as mf'"
+
+
+!EOF!
